@@ -9,14 +9,14 @@ output:
 ## Loading and preprocessing the data
 
 Read csv, put into data.frame.
-```{r}
+```{r, echo=TRUE}
 activity = read.csv('activity.csv')
 df = data.frame(activity)
 ```
 
 ## What is mean total number of steps taken per day?
 
-```{r}
+```{r, echo=TRUE}
 library(dplyr)
 df_steps <- data.frame(df %>% 
   group_by(date) %>% 
@@ -31,16 +31,16 @@ df_steps[,'count', drop=FALSE]
 ## What is the average daily activity pattern?
 
 Histogram of steps taken per day:
-```{r}
+```{r, echo=TRUE}
 hist(df_steps$count)
 ```
 Mean and median of steps per day:
-```{r}
+```{r, echo=TRUE}
 df_steps[, 'mean', drop=FALSE]
 df_steps[,'median', drop=FALSE]
 ```
 Plot average steps for each 5-minute interval:
-```{r}
+```{r, echo=TRUE}
 df_intervals = data.frame(df %>% 
   group_by(interval) %>% 
   summarise(mean = mean(steps, na.rm=TRUE)))
@@ -51,11 +51,11 @@ apply(df_intervals, MARGIN = 2, function(x) max(x, na.rm=TRUE))
 
 ## Imputing missing values
 Number of missing values
-```{r}
+```{r, echo=TRUE}
 sum(is.na(df$steps))
 ```
 Impute mean of each 5-minute interval:
-```{r}
+```{r, echo=TRUE}
 df_copy = cbind(df)
 for (i in unique(df_copy$interval))
     df_copy[df_copy$interval==i & is.na(df_copy$steps),'steps']=df_intervals[df_intervals$interval==i,'mean']
@@ -73,7 +73,7 @@ hist(df_copy_steps$count)
 
 Make weekdays variable:
 
-```{r}
+```{r, echo=TRUE}
 df_copy$weekday = weekdays(df_copy$date)
 df_copy$day_type = ifelse(df_copy$weekday=='Saturday' | df_copy$weekday=='Sunday', 'Weekend', 'Weekday')
 
@@ -82,7 +82,7 @@ df_copy_intervals = data.frame(df_copy %>%
   summarise(mean = mean(steps, na.rm=TRUE)))
 ```
 Plot:
-```{r}
+```{r, echo=TRUE}
 library('ggplot2')
 ggplot(data=df_copy_intervals, aes(x=interval, y=mean))+geom_line()+facet_wrap(~day_type, nrow=2)
 ```
