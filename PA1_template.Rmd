@@ -8,18 +8,81 @@ output:
 
 ## Loading and preprocessing the data
 
-
+Read csv, put into data.frame.
+```{r}
+activity = read.csv('activity.csv')
+df = data.frame(activity)
+```
 
 ## What is mean total number of steps taken per day?
 
-
+```{r}
+library(dplyr)
+df_steps <- data.frame(df %>% 
+  group_by(date) %>% 
+  summarise(count = sum(steps),
+            mean = mean(steps, na.rm=TRUE),
+            median = median(steps, na.rm=TRUE)))
+rownames(df_steps) = df_steps$date
+df_steps$date = NULL
+df_steps[,'count', drop=FALSE]
+```
 
 ## What is the average daily activity pattern?
 
-
+Histogram of steps taken per day:
+```{r}
+hist(df_steps$count)
+```
+Mean and median of steps per day:
+```{r}
+df_steps[, 'mean', drop=FALSE]
+df_steps[,'median', drop=FALSE]
+```
+Plot average steps for each 5-minute interval:
+```{r}
+df_intervals = data.frame(df %>% 
+  group_by(interval) %>% 
+  summarise(mean = mean(steps, na.rm=TRUE)))
+df$date = as.Date(df$date)
+plot(df_intervals$interval, y = df_intervals$mean, plot.type = 'l')
+apply(df_intervals, MARGIN = 2, function(x) max(x, na.rm=TRUE))
+```
 
 ## Imputing missing values
-
-
+Number of missing values
+```{r}
+sum(is.na(df$steps))
+```
+Impute mean of each 5-minute interval:
+```{r}
+df_copy = cbind(df)
+for (i in unique(df_copy$interval))
+    df_copy[df_copy$interval==i & is.na(df_copy$steps),'steps']=df_intervals[df_intervals$interval==i,'mean']
+df_copy_steps <- data.frame(df_copy %>% 
+  group_by(date) %>% 
+  summarise(count = sum(steps),
+            mean = mean(steps, na.rm=TRUE),
+            median = median(steps, na.rm=TRUE)))
+```
+```{r}
+hist(df_copy_steps$count)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Make weekdays variable:
+
+```{r}
+df_copy$weekday = weekdays(df_copy$date)
+df_copy$day_type = ifelse(df_copy$weekday=='Saturday' | df_copy$weekday=='Sunday', 'Weekend', 'Weekday')
+
+df_copy_intervals = data.frame(df_copy %>% 
+  group_by(interval, day_type) %>% 
+  summarise(mean = mean(steps, na.rm=TRUE)))
+```
+Plot:
+```{r}
+library('ggplot2')
+ggplot(data=df_copy_intervals, aes(x=interval, y=mean))+geom_line()+facet_wrap(~day_type, nrow=2)
+```
